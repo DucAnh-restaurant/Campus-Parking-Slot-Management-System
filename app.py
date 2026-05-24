@@ -69,7 +69,7 @@ if __name__ == '__main__':
     print("=" * 70)
     print("\n  Default login credentials:")
     print("  Admin    → admin@campus.edu     / admin123")
-    print("  Student  → john@campus.edu      / student123")
+    print("  Student  → alex@campus.edu      / student123")
     print("  Staff    → guard@campus.edu     / staff123")
     print("=" * 70 + "\n")
     

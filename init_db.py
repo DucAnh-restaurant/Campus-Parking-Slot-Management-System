@@ -34,7 +34,7 @@ def seed_database():
             phone_number='9999900000',
             role='admin'
         )
-        admin.set_password(os.environ.get('admin_password'))
+        admin.set_password('admin123')
 
         student1 = User(
             user_name='John Doe',
@@ -66,7 +66,7 @@ def seed_database():
             phone_number='9999944444',
             role='parking_staff'
         )
-        parking_guard.set_password(os.environ.get('guard_password'))
+        parking_guard.set_password('staff123')
 
         student3 = User(
             user_name='Alex Kumar',
