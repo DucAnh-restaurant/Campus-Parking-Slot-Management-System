@@ -2,10 +2,13 @@
 Campus Parking Slot Management System (CPSMS)
 Main Flask application entry point.
 """
-from flask import Flask
+from flask import Flask, redirect, url_for
 from config import Config
 from models import db
 from models.user import bcrypt
+
+# Import limiter
+from extensions import limiter
 
 # Import blueprints
 from routes.auth import auth_bp
@@ -45,6 +48,11 @@ def create_app():
     app.register_blueprint(user_bp, url_prefix='/user')
     app.register_blueprint(admin_bp, url_prefix='/admin')
     app.register_blueprint(staff_bp, url_prefix='/staff')
+
+    @app.route('/')
+    def home():
+        return redirect(url_for('auth.login'))
+
 
     # Create tables if they don't exist
     with app.app_context():
