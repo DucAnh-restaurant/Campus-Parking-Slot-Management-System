@@ -32,7 +32,8 @@ def login():
         try:
             limiter = current_app.limiter if hasattr(current_app, 'limiter') else None
             
-            if limiter:
+            if limiter and Config.RATELIMIT_ENABLED:
+                # Áp dụng rate limit nghiêm cho login
                 limiter.limit(Config.RATELIMIT_LOGIN, key_func=get_remote_address)()
                 
         except TooManyRequests as e:

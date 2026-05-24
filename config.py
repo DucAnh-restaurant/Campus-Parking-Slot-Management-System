@@ -55,10 +55,10 @@ class Config:
     RATELIMIT_STORAGE_URL = "memory://"       # Dùng Redis khi production: "redis://localhost:6379"
     
     # Rate limit cụ thể cho login (rất quan trọng)
-    RATELIMIT_LOGIN = "5 per minute"         # 5 lần login / phút từ 1 IP
+    RATELIMIT_LOGIN = "3 per minute; 15 per hour"
     
     # Rate limit theo IP + Email (chống brute force mạnh hơn)
-    RATELIMIT_LOGIN_PER_EMAIL = "5 per minute"
+    RATELIMIT_LOGIN_PER_EMAIL = "3 per minute; 10 per hour"
 
     # Tùy chọn nâng cao
     RATELIMIT_ENABLED = True
