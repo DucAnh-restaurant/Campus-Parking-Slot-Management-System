@@ -75,3 +75,6 @@ echo "[*] SETUP HOÀN TẤT!"
 echo "[*] Hệ thống sẽ tự động chạy mỗi khi khởi động máy."
 echo "[*] Bạn có thể reboot ngay bây giờ."
 echo "[*] ==============================================="
+
+# reboot máy để tự động chạy service
+sudo reboot
