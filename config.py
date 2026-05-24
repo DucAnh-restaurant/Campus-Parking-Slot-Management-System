@@ -36,6 +36,11 @@ class Config:
 
     # Session config
     SESSION_TYPE = 'filesystem'
+
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SECURE = False
+    SESSION_COOKIE_SAMESITE = 'Lax'
+
     PERMANENT_SESSION_LIFETIME = 3600  # 1 hour
 
     # Account lockout threshold
