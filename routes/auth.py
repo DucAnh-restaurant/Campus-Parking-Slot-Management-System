@@ -34,7 +34,7 @@ def login():
         password = request.form.get('password', '')
 
         if not email or not password:
-            flash('Please enter both email and password.', 'danger')
+            flash('Invalid email or password.', 'danger')
             return render_template('auth/login.html')
 
         user = User.query.filter_by(email=email).first()
