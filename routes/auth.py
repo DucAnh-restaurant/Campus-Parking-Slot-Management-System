@@ -5,10 +5,11 @@ from models import db
 from models.user import User
 from config import Config
 
-auth = Blueprint('auth', __name__)
+# Đổi tên blueprint cho nhất quán
+auth_bp = Blueprint('auth', __name__)
 
 
-@auth.route('/')
+@auth_bp.route('/')
 def index():
     if 'user_id' in session:
         role = session.get('role')
@@ -21,7 +22,7 @@ def index():
     return redirect(url_for('auth.login'))
 
 
-@auth.route('/login', methods=['GET', 'POST'])
+@auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     if 'user_id' in session:
         return redirect(url_for('auth.index'))
@@ -29,20 +30,17 @@ def login():
     if request.method == 'POST':
         # ====================== RATE LIMITING THEO IP ======================
         try:
-            # Cách an toàn nhất để lấy limiter
             limiter = current_app.limiter if hasattr(current_app, 'limiter') else None
             
             if limiter:
-                # Áp dụng rate limit
                 limiter.limit(Config.RATELIMIT_LOGIN, key_func=get_remote_address)()
                 
         except TooManyRequests as e:
-            # Hiển thị thông báo có thời gian
             retry_after = getattr(e, 'description', '') or str(e)
             flash(f'Too many login attempts from this IP. Please try again later. {retry_after}', 'danger')
             return render_template('auth/login.html')
             
-        except Exception as e:
+        except Exception:
             flash('Too many login attempts. Please try again later.', 'danger')
             return render_template('auth/login.html')
         # ===================================================================
@@ -65,7 +63,7 @@ def login():
             flash('Invalid email or password.', 'danger')
             return render_template('auth/login.html')
 
-        # Login thành công
+        # ==================== LOGIN THÀNH CÔNG ====================
         user.login_attempts = 0
         db.session.commit()
 
@@ -87,7 +85,7 @@ def login():
     return render_template('auth/login.html')
 
 
-@auth.route('/logout')
+@auth_bp.route('/logout')
 def logout():
     session.clear()
     flash('You have been logged out.', 'info')
