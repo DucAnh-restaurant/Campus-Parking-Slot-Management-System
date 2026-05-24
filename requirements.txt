@@ -6,3 +6,4 @@ cryptography==41.0.7
 python-dotenv==1.0.0
 flask-wtf
 Flask-Limiter
+redis
