@@ -22,32 +22,40 @@ def index():
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
-    """Login route with secure messages + Rate Limiting"""
+    """Login route with email domain validation + Rate Limiting"""
     if 'user_id' in session:
         return redirect(url_for('auth.index'))
 
-    # ====================== RATE LIMITING ======================
-    # Lấy limiter từ app (đã được gán ở app.py)
+    # ====================== RATE LIMITING (IP only) ======================
     limiter = None
     try:
         from app import create_app
         app = create_app()
         limiter = getattr(app, 'limiter', None)
         
-        if limiter:
-            # Áp dụng rate limit cho login (chỉ áp dụng khi POST)
-            if request.method == 'POST':
-                limiter.limit(Config.RATELIMIT_LOGIN)(lambda: None)()
+        if limiter and request.method == 'POST':
+            # Rate limit theo IP (không lock account)
+            limiter.limit(Config.RATELIMIT_LOGIN)(lambda: None)()
     except:
-        pass  # Tránh lỗi khi khởi tạo hoặc test
-    # ==========================================================
+        pass  # Tránh lỗi khi test hoặc khởi tạo
+    # ===================================================================
 
     if request.method == 'POST':
         email = request.form.get('email', '').strip().lower()
         password = request.form.get('password', '')
 
+        # === VALIDATION EMAIL FORMAT ===
+        if not email or '@' not in email:
+            flash('Invalid email or password.', 'danger')
+            return render_template('auth/login.html')
+
+        # Phải kết thúc bằng @campus.edu
+        if not email.endswith('@campus.edu'):
+            flash('Invalid email or password.', 'danger')
+            return render_template('auth/login.html')
+
         # Kiểm tra input trống
-        if not email or not password:
+        if not password:
             flash('Invalid email or password.', 'danger')
             return render_template('auth/login.html')
 
@@ -58,26 +66,17 @@ def login():
             flash('Invalid email or password.', 'danger')
             return render_template('auth/login.html')
 
-        if getattr(user, 'is_locked', False):
-            flash('Invalid email or password.', 'danger')
-            return render_template('auth/login.html')
-
         # Kiểm tra mật khẩu
         if not user.check_password(password):
-            # Tăng số lần thử sai
+            # Chỉ tăng attempt (không lock account)
             user.login_attempts = (user.login_attempts or 0) + 1
             db.session.commit()
-
-            if user.login_attempts >= Config.MAX_LOGIN_ATTEMPTS:
-                user.is_locked = True
-                db.session.commit()
-
+            
             flash('Invalid email or password.', 'danger')
             return render_template('auth/login.html')
 
         # ==================== LOGIN THÀNH CÔNG ====================
         user.login_attempts = 0
-        user.is_locked = False
         db.session.commit()
 
         session['user_id'] = user.user_id
