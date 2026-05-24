@@ -52,7 +52,7 @@ class Config:
 
     # ── Rate Limiting (Flask-Limiter) ───────────────────────────────
     RATELIMIT_DEFAULT = "100 per minute"      # Giới hạn mặc định cho toàn app
-    RATELIMIT_STORAGE_URL = "memory://"       # Dùng Redis khi production: "redis://localhost:6379"
+    RATELIMIT_STORAGE_URL = "redis://localhost:6379/0"       # Dùng Redis khi production: "redis://localhost:6379"
     
     # Rate limit cụ thể cho login (rất quan trọng)
     RATELIMIT_LOGIN = "3 per minute; 15 per hour"

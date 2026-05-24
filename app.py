@@ -13,9 +13,10 @@ from routes.user import user_bp
 from routes.admin import admin_bp
 from routes.staff import staff_bp
 
-# === NEW: Import Flask-Limiter ===
+# === Flask-Limiter ===
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+
 
 def create_app():
     """Application factory."""
@@ -29,22 +30,21 @@ def create_app():
     # ====================== RATE LIMITER SETUP ======================
     limiter = Limiter(
         key_func=get_remote_address,
-        app=app,
         default_limits=[app.config.get("RATELIMIT_DEFAULT", "100 per minute")],
         storage_uri=app.config.get("RATELIMIT_STORAGE_URL", "memory://"),
         headers_enabled=app.config.get("RATELIMIT_HEADERS_ENABLED", True),
-        strategy="fixed-window"   # or "moving-window"
+        strategy="fixed-window"          # fixed-window hoặc moving-window
     )
+    
+    limiter.init_app(app)                # Cách chuẩn
+    app.limiter = limiter                # Quan trọng: Để dùng trong Blueprint
     # ============================================================
 
     # Register blueprints
-    app.register_blueprint(auth_bp)
-    app.register_blueprint(user_bp)
-    app.register_blueprint(admin_bp)
-    app.register_blueprint(staff_bp)
-
-    # Optional: Attach limiter to app (dễ sử dụng ở các route khác)
-    app.limiter = limiter
+    app.register_blueprint(auth_bp, url_prefix='/auth')
+    app.register_blueprint(user_bp, url_prefix='/user')
+    app.register_blueprint(admin_bp, url_prefix='/admin')
+    app.register_blueprint(staff_bp, url_prefix='/staff')
 
     # Create tables if they don't exist
     with app.app_context():
@@ -55,13 +55,14 @@ def create_app():
 
 if __name__ == '__main__':
     app = create_app()
-    print("\n" + "=" * 60)
+    print("\n" + "=" * 70)
     print("  CPSMS – Campus Parking Slot Management System")
     print("  Running at: http://127.0.0.1:5000")
-    print("=" * 60)
+    print("=" * 70)
     print("\n  Default login credentials:")
-    print("  Admin    → admin@campus.edu / admin123")
-    print("  Student  → john@campus.edu  / student123")
-    print("  Staff    → guard@campus.edu / staff123")
-    print("=" * 60 + "\n")
+    print("  Admin    → admin@campus.edu     / admin123")
+    print("  Student  → john@campus.edu      / student123")
+    print("  Staff    → guard@campus.edu     / staff123")
+    print("=" * 70 + "\n")
+    
     app.run(debug=False, host='0.0.0.0', port=5000)
