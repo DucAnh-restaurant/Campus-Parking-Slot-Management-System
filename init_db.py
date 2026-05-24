@@ -74,7 +74,8 @@ def seed_database():
             phone_number='9999955555',
             role='student'
         )
-        student3.set_password(os.environ.get('student_password_alex'))
+        #student3.set_password(os.environ.get('student_password_alex'))
+        student3.set_password('student123')  # Dùng chung password cho dễ nhớ
 
         db.session.add_all([admin, student1, student2, staff_member, parking_guard, student3])
         db.session.flush()  # Get IDs
