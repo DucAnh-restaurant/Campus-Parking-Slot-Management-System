@@ -1,14 +1,14 @@
-from flask import Blueprint, request, session, redirect, url_for, flash, render_template
+from flask import Blueprint, request, session, redirect, url_for, flash, render_template, current_app
 from flask_limiter.util import get_remote_address
-from werkzeug.exceptions import TooManyRequests  # Import này quan trọng
+from werkzeug.exceptions import TooManyRequests
 from models import db
 from models.user import User
 from config import Config
 
-auth_bp = Blueprint('auth', __name__)
+auth = Blueprint('auth', __name__)
 
 
-@auth_bp.route('/')
+@auth.route('/')
 def index():
     if 'user_id' in session:
         role = session.get('role')
@@ -21,7 +21,7 @@ def index():
     return redirect(url_for('auth.login'))
 
 
-@auth_bp.route('/login', methods=['GET', 'POST'])
+@auth.route('/login', methods=['GET', 'POST'])
 def login():
     if 'user_id' in session:
         return redirect(url_for('auth.index'))
@@ -29,17 +29,20 @@ def login():
     if request.method == 'POST':
         # ====================== RATE LIMITING THEO IP ======================
         try:
-            limiter = getattr(request, 'limiter', None) or getattr(current_app, 'limiter', None)
+            # Cách an toàn nhất để lấy limiter
+            limiter = current_app.limiter if hasattr(current_app, 'limiter') else None
+            
             if limiter:
-                # Áp dụng rate limit trước khi xử lý logic
+                # Áp dụng rate limit
                 limiter.limit(Config.RATELIMIT_LOGIN, key_func=get_remote_address)()
+                
         except TooManyRequests as e:
-            # Lấy thời gian còn lại
-            retry_after = getattr(e, 'description', None) or str(e)
-            flash(f'Too many login attempts from this IP. Please try again later. ({retry_after})', 'danger')
+            # Hiển thị thông báo có thời gian
+            retry_after = getattr(e, 'description', '') or str(e)
+            flash(f'Too many login attempts from this IP. Please try again later. {retry_after}', 'danger')
             return render_template('auth/login.html')
+            
         except Exception as e:
-            # Fallback nếu có lỗi
             flash('Too many login attempts. Please try again later.', 'danger')
             return render_template('auth/login.html')
         # ===================================================================
@@ -62,7 +65,7 @@ def login():
             flash('Invalid email or password.', 'danger')
             return render_template('auth/login.html')
 
-        # ==================== LOGIN THÀNH CÔNG ====================
+        # Login thành công
         user.login_attempts = 0
         db.session.commit()
 
@@ -84,7 +87,7 @@ def login():
     return render_template('auth/login.html')
 
 
-@auth_bp.route('/logout')
+@auth.route('/logout')
 def logout():
     session.clear()
     flash('You have been logged out.', 'info')
