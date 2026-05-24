@@ -1,4 +1,6 @@
 from flask import Blueprint, request, session, redirect, url_for, flash, render_template
+from flask_limiter.util import get_remote_address
+from werkzeug.exceptions import TooManyRequests  # Import này quan trọng
 from models import db
 from models.user import User
 from config import Config
@@ -8,7 +10,6 @@ auth_bp = Blueprint('auth', __name__)
 
 @auth_bp.route('/')
 def index():
-    """Root – redirect to appropriate dashboard or login."""
     if 'user_id' in session:
         role = session.get('role')
         if role == 'admin':
@@ -22,56 +23,42 @@ def index():
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
-    """Login route with email domain validation + Rate Limiting"""
     if 'user_id' in session:
         return redirect(url_for('auth.index'))
 
-    # ====================== RATE LIMITING (IP only) ======================
-    limiter = None
-    try:
-        from app import create_app
-        app = create_app()
-        limiter = getattr(app, 'limiter', None)
-        
-        if limiter and request.method == 'POST':
-            # Rate limit theo IP (không lock account)
-            limiter.limit(Config.RATELIMIT_LOGIN)(lambda: None)()
-    except:
-        pass  # Tránh lỗi khi test hoặc khởi tạo
-    # ===================================================================
-
     if request.method == 'POST':
+        # ====================== RATE LIMITING THEO IP ======================
+        try:
+            limiter = getattr(request, 'limiter', None) or getattr(current_app, 'limiter', None)
+            if limiter:
+                # Áp dụng rate limit trước khi xử lý logic
+                limiter.limit(Config.RATELIMIT_LOGIN, key_func=get_remote_address)()
+        except TooManyRequests as e:
+            # Lấy thời gian còn lại
+            retry_after = getattr(e, 'description', None) or str(e)
+            flash(f'Too many login attempts from this IP. Please try again later. ({retry_after})', 'danger')
+            return render_template('auth/login.html')
+        except Exception as e:
+            # Fallback nếu có lỗi
+            flash('Too many login attempts. Please try again later.', 'danger')
+            return render_template('auth/login.html')
+        # ===================================================================
+
         email = request.form.get('email', '').strip().lower()
         password = request.form.get('password', '')
 
-        # === VALIDATION EMAIL FORMAT ===
-        if not email or '@' not in email:
+        # Email validation
+        if not email or '@' not in email or not email.endswith('@campus.edu'):
             flash('Invalid email or password.', 'danger')
             return render_template('auth/login.html')
 
-        # Phải kết thúc bằng @campus.edu
-        if not email.endswith('@campus.edu'):
-            flash('Invalid email or password.', 'danger')
-            return render_template('auth/login.html')
-
-        # Kiểm tra input trống
         if not password:
             flash('Invalid email or password.', 'danger')
             return render_template('auth/login.html')
 
         user = User.query.filter_by(email=email).first()
 
-        # === SECURITY: Luôn dùng chung 1 thông báo ===
-        if user is None:
-            flash('Invalid email or password.', 'danger')
-            return render_template('auth/login.html')
-
-        # Kiểm tra mật khẩu
-        if not user.check_password(password):
-            # Chỉ tăng attempt (không lock account)
-            user.login_attempts = (user.login_attempts or 0) + 1
-            db.session.commit()
-            
+        if user is None or not user.check_password(password):
             flash('Invalid email or password.', 'danger')
             return render_template('auth/login.html')
 
@@ -87,7 +74,6 @@ def login():
 
         flash(f'Welcome back, {user.user_name}!', 'success')
 
-        # Redirect theo role
         if user.role == 'admin':
             return redirect(url_for('admin.dashboard'))
         elif user.role == 'parking_staff':
@@ -100,7 +86,6 @@ def login():
 
 @auth_bp.route('/logout')
 def logout():
-    """Clear session and redirect to login."""
     session.clear()
     flash('You have been logged out.', 'info')
     return redirect(url_for('auth.login'))
