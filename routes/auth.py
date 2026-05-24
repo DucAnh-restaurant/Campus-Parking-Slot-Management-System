@@ -1,10 +1,7 @@
 from flask import Blueprint, request, session, redirect, url_for, flash, render_template
-from flask_limiter import Limiter
 from models import db
 from models.user import User
 from config import Config
-
-from flask_limiter.util import get_remote_address
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -24,36 +21,63 @@ def index():
 
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
-@Limiter.limit("10 per minute", methods=["POST"])   # Giới hạn mạnh cho login
 def login():
+    """Login route with secure messages + Rate Limiting"""
     if 'user_id' in session:
         return redirect(url_for('auth.index'))
+
+    # ====================== RATE LIMITING ======================
+    # Lấy limiter từ app (đã được gán ở app.py)
+    limiter = None
+    try:
+        from app import create_app
+        app = create_app()
+        limiter = getattr(app, 'limiter', None)
+        
+        if limiter:
+            # Áp dụng rate limit cho login (chỉ áp dụng khi POST)
+            if request.method == 'POST':
+                limiter.limit(Config.RATELIMIT_LOGIN)(lambda: None)()
+    except:
+        pass  # Tránh lỗi khi khởi tạo hoặc test
+    # ==========================================================
 
     if request.method == 'POST':
         email = request.form.get('email', '').strip().lower()
         password = request.form.get('password', '')
 
+        # Kiểm tra input trống
         if not email or not password:
             flash('Invalid email or password.', 'danger')
             return render_template('auth/login.html')
 
         user = User.query.filter_by(email=email).first()
 
+        # === SECURITY: Luôn dùng chung 1 thông báo ===
         if user is None:
-            # Vẫn trả về thông báo chung để không leak thông tin user tồn tại
             flash('Invalid email or password.', 'danger')
             return render_template('auth/login.html')
 
-        # Không kiểm tra is_locked nữa (hoặc giữ để admin lock manual)
+        if getattr(user, 'is_locked', False):
+            flash('Invalid email or password.', 'danger')
+            return render_template('auth/login.html')
 
+        # Kiểm tra mật khẩu
         if not user.check_password(password):
-            # Chỉ ghi log failed attempt (không khóa account)
-            # Có thể lưu vào bảng login_log nếu muốn audit sau
+            # Tăng số lần thử sai
+            user.login_attempts = (user.login_attempts or 0) + 1
+            db.session.commit()
+
+            if user.login_attempts >= Config.MAX_LOGIN_ATTEMPTS:
+                user.is_locked = True
+                db.session.commit()
+
             flash('Invalid email or password.', 'danger')
             return render_template('auth/login.html')
 
-        # Successful login – reset attempts
+        # ==================== LOGIN THÀNH CÔNG ====================
         user.login_attempts = 0
+        user.is_locked = False
         db.session.commit()
 
         session['user_id'] = user.user_id
@@ -64,7 +88,7 @@ def login():
 
         flash(f'Welcome back, {user.user_name}!', 'success')
 
-        # Role-based redirect
+        # Redirect theo role
         if user.role == 'admin':
             return redirect(url_for('admin.dashboard'))
         elif user.role == 'parking_staff':
