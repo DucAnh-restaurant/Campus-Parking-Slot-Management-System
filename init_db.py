@@ -12,7 +12,10 @@ from models.vehicle import Vehicle
 from models.parking_slot import ParkingSlot
 from models.reservation import Reservation
 from datetime import date, time
+from dotenv import load_dotenv
+import os
 
+load_dotenv()
 
 def seed_database():
     """Create tables and insert sample data."""
@@ -31,7 +34,7 @@ def seed_database():
             phone_number='9999900000',
             role='admin'
         )
-        admin.set_password('admin123')
+        admin.set_password(os.environ.get('admin_password'))
 
         student1 = User(
             user_name='John Doe',
@@ -39,7 +42,7 @@ def seed_database():
             phone_number='9999911111',
             role='student'
         )
-        student1.set_password('student123')
+        student1.set_password(os.environ.get('student_password_1'))
 
         student2 = User(
             user_name='Jane Smith',
@@ -47,7 +50,7 @@ def seed_database():
             phone_number='9999922222',
             role='student'
         )
-        student2.set_password('student123')
+        student2.set_password(os.environ.get('student_password_2'))
 
         staff_member = User(
             user_name='Prof. Williams',
@@ -55,7 +58,7 @@ def seed_database():
             phone_number='9999933333',
             role='staff'
         )
-        staff_member.set_password('staff123')
+        staff_member.set_password(os.environ.get('staff_password'))
 
         parking_guard = User(
             user_name='Security Guard',
@@ -63,7 +66,7 @@ def seed_database():
             phone_number='9999944444',
             role='parking_staff'
         )
-        parking_guard.set_password('staff123')
+        parking_guard.set_password(os.environ.get('guard_password'))
 
         student3 = User(
             user_name='Alex Kumar',
@@ -71,7 +74,7 @@ def seed_database():
             phone_number='9999955555',
             role='student'
         )
-        student3.set_password('student123')
+        student3.set_password(os.environ.get('student_password_alex'))
 
         db.session.add_all([admin, student1, student2, staff_member, parking_guard, student3])
         db.session.flush()  # Get IDs

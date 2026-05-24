@@ -2,7 +2,7 @@ import os
 
 class Config:
     """Application configuration."""
-    SECRET_KEY = os.environ.get('SECRET_KEY', 'cpsms-super-secret-key-change-in-production')
+    SECRET_KEY = os.environ.get('SECRET_KEY', 'cp5m5-sup3r-s3cr3t-k3y-ch8nge-1n-pr0dwcti0n')
 
     # ── Database Configuration ───────────────────────────────────────
     # Set USE_MYSQL=true to use MySQL. Otherwise SQLite is used for easy local testing.
