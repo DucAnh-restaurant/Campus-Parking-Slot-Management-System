@@ -1,7 +1,10 @@
 from flask import Blueprint, request, session, redirect, url_for, flash, render_template
+from flask_limiter import Limiter
 from models import db
 from models.user import User
 from config import Config
+
+from flask_limiter.util import get_remote_address
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -21,8 +24,8 @@ def index():
 
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
+@Limiter.limit("10 per minute", methods=["POST"])   # Giới hạn mạnh cho login
 def login():
-    """Handle login – no self-registration. Accounts are created by admin."""
     if 'user_id' in session:
         return redirect(url_for('auth.index'))
 
@@ -37,26 +40,16 @@ def login():
         user = User.query.filter_by(email=email).first()
 
         if user is None:
+            # Vẫn trả về thông báo chung để không leak thông tin user tồn tại
             flash('Invalid email or password.', 'danger')
             return render_template('auth/login.html')
 
-        # Check if account is locked
-        if user.is_locked:
-            flash('Your account has been locked due to too many failed attempts. Contact an administrator.', 'danger')
-            return render_template('auth/login.html')
+        # Không kiểm tra is_locked nữa (hoặc giữ để admin lock manual)
 
-        # Verify password
         if not user.check_password(password):
-            # Increment failed attempts
-            user.login_attempts += 1
-            if user.login_attempts >= Config.MAX_LOGIN_ATTEMPTS:
-                user.is_locked = True
-                db.session.commit()
-                flash('Account locked after 3 failed attempts. Contact an administrator.', 'danger')
-            else:
-                db.session.commit()
-                remaining = Config.MAX_LOGIN_ATTEMPTS - user.login_attempts
-                flash(f'Invalid password. {remaining} attempt(s) remaining.', 'danger')
+            # Chỉ ghi log failed attempt (không khóa account)
+            # Có thể lưu vào bảng login_log nếu muốn audit sau
+            flash('Invalid email or password.', 'danger')
             return render_template('auth/login.html')
 
         # Successful login – reset attempts
