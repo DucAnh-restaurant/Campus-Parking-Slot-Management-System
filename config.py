@@ -43,5 +43,23 @@ class Config:
 
     PERMANENT_SESSION_LIFETIME = 3600  # 1 hour
 
-    # Account lockout threshold
-    MAX_LOGIN_ATTEMPTS = 3
+    # ── Security & Login Configuration ──────────────────────────────
+    # Account lockout (có thể giữ hoặc bỏ sau)
+    MAX_LOGIN_ATTEMPTS = 5                    # Tăng lên 5 là hợp lý hơn
+
+    # Thời gian tính login attempts (giây)
+    LOGIN_ATTEMPT_WINDOW = 300                # 5 phút
+
+    # ── Rate Limiting (Flask-Limiter) ───────────────────────────────
+    RATELIMIT_DEFAULT = "100 per minute"      # Giới hạn mặc định cho toàn app
+    RATELIMIT_STORAGE_URL = "memory://"       # Dùng Redis khi production: "redis://localhost:6379"
+    
+    # Rate limit cụ thể cho login (rất quan trọng)
+    RATELIMIT_LOGIN = "10 per minute"         # 10 lần login / phút từ 1 IP
+    
+    # Rate limit theo IP + Email (chống brute force mạnh hơn)
+    RATELIMIT_LOGIN_PER_EMAIL = "5 per minute"
+
+    # Tùy chọn nâng cao
+    RATELIMIT_ENABLED = True
+    RATELIMIT_HEADERS_ENABLED = True
