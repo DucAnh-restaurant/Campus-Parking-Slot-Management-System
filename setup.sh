@@ -6,7 +6,6 @@ echo "[*] ==============================================="
 echo "[*] Campus Parking Slot Management System - SETUP"
 echo "[*] ==============================================="
 
-# Kiểm tra đã setup chưa
 if [ -f "/opt/parking/.setup_done" ]; then
     echo "[!] Hệ thống đã được cài đặt trước đó."
     echo "[!] Vui lòng reboot máy để hệ thống tự chạy."
@@ -14,9 +13,10 @@ if [ -f "/opt/parking/.setup_done" ]; then
 fi
 
 echo "[*] Installing Redis Server..."
-sudo apt install -y redis-server
+sudo apt update
+sudo apt install -y redis-server python3-venv
 
-echo "[*] Configuring Redis to start on boot..."
+echo "[*] Configuring Redis..."
 sudo systemctl enable redis-server
 sudo systemctl start redis-server
 
@@ -35,13 +35,15 @@ pip install -r requirements.txt
 echo "[*] Initializing database..."
 python init_db.py
 
-# ==================== TẠO SYSTEMD SERVICE ====================
-echo "[*] Creating systemd service for auto-start..."
+echo "[*] Creating systemd service..."
 
 USERNAME=$(whoami)
 PROJECT_PATH=$(pwd)
 
-sudo cat > /etc/systemd/system/parking.service << EOF
+chmod +x start.sh
+
+# Tạo file systemd service cho ứng dụng
+sudo tee /etc/systemd/system/parking.service > /dev/null << EOF
 [Unit]
 Description=Campus Parking Slot Management System
 After=network.target redis-server.service
@@ -54,27 +56,30 @@ WorkingDirectory=$PROJECT_PATH
 ExecStart=/bin/bash $PROJECT_PATH/start.sh
 Restart=always
 RestartSec=5
-StandardOutput=journal
-StandardError=journal
+
+StandardInput=tty
+StandardOutput=tty
+StandardError=tty
+TTYPath=/dev/tty1
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
-# Kích hoạt service
+# Reload systemd, enable and start the service
 sudo systemctl daemon-reload
 sudo systemctl enable parking.service
 
-# Đánh dấu đã setup xong
+# Tạo file đánh dấu đã setup xong
 sudo mkdir -p /opt/parking
 sudo touch /opt/parking/.setup_done
-sudo chown -R $USERNAME:$USERNAME /opt/parking 2>/dev/null || true
+sudo chown -R $USERNAME:$USERNAME /opt/parking
 
+# Tạo local domain parking.local
 echo "[*] ==============================================="
 echo "[*] SETUP HOÀN TẤT!"
-echo "[*] Hệ thống sẽ tự động chạy mỗi khi khởi động máy."
-echo "[*] Bạn có thể reboot ngay bây giờ."
+echo "[*] Hệ thống sẽ hiển thị trực tiếp trên console sau reboot."
 echo "[*] ==============================================="
 
-# reboot máy để tự động chạy service
+# Reboot máy để áp dụng thay đổi và khởi động dịch vụ
 sudo reboot
