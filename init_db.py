@@ -42,7 +42,7 @@ def seed_database():
             phone_number='9999911111',
             role='student'
         )
-        student1.set_password(os.environ.get('student_password_1'))
+        student1.set_password('student123')
 
         student2 = User(
             user_name='Jane Smith',
@@ -50,7 +50,7 @@ def seed_database():
             phone_number='9999922222',
             role='student'
         )
-        student2.set_password(os.environ.get('student_password_2'))
+        student2.set_password('student123')
 
         staff_member = User(
             user_name='Prof. Williams',
@@ -58,7 +58,7 @@ def seed_database():
             phone_number='9999933333',
             role='staff'
         )
-        staff_member.set_password(os.environ.get('staff_password'))
+        staff_member.set_password('student123')
 
         parking_guard = User(
             user_name='Security Guard',
@@ -66,7 +66,7 @@ def seed_database():
             phone_number='9999944444',
             role='parking_staff'
         )
-        parking_guard.set_password('staff123')
+        parking_guard.set_password('guard123')
 
         student3 = User(
             user_name='Alex Kumar',
