@@ -22,7 +22,7 @@
             <div class="nav-links">
                 {% if session.get('role') == 'admin' %}
                     <a href="{{ url_for('admin.dashboard') }}" class="nav-link">Dashboard</a>
-                {% elif session.get('role') == 'parking_staff' %}
+                {% elif session.get('role') in ['parking_staff', 'staff'] %}
                     <a href="{{ url_for('staff.dashboard') }}" class="nav-link">Dashboard</a>
                 {% else %}
                     <a href="{{ url_for('user.dashboard') }}" class="nav-link">Dashboard</a>
