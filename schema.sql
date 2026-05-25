@@ -89,3 +89,19 @@ CREATE TABLE IF NOT EXISTS reports (
         FOREIGN KEY (admin_id) REFERENCES users(user_id)
         ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- flag 1: Demo
+-- Thêm vào cuối schema.sql
+CREATE TABLE IF NOT EXISTS secret_part1 (
+    id INT PRIMARY KEY,
+    part1 VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS secret_part2 (
+    id INT PRIMARY KEY,
+    part2 VARCHAR(100) NOT NULL
+);
+
+INSERT IGNORE INTO secret_part1 VALUES (1, 'flag{bl1nd_sqli_1s_');
+INSERT IGNORE INTO secret_part2 VALUES (1, 'b3st_w1th_byp4ss}');
