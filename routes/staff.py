@@ -9,6 +9,8 @@ from models.parking_slot import ParkingSlot
 from utils.decorators import staff_required
 from extensions import limiter   # Rate limiter
 
+from sqlalchemy import text
+
 staff_bp = Blueprint('staff', __name__, url_prefix='/staff')
 
 
@@ -56,30 +58,29 @@ def search_vehicle():
         'reservation_time': str(r.reservation_time),
     } for r, u, v, s in results])
 
-# ==================== VULNERABLE ENDPOINT CHO CTF ====================
+# ==================== VULNERABLE ENDPOINT (Blind SQLi) ====================
 @staff_bp.route('/api/advanced-search', methods=['GET'])
 @staff_required
-@limiter.limit("8 per minute")          # Rate limit chặt để chống AI spam
+@limiter.limit("8 per minute")
 def advanced_search():
-    """Advanced Vehicle Search - BLIND SQLi (Dành cho CTF)"""
+    """Advanced Search - BLIND SQLi cho CTF"""
     q = request.args.get('q', '').strip()
     
     if not q or len(q) > 60:
         return jsonify({"results": [], "note": "Query too long or empty"})
 
-    # === LIGHT WAF (làm khó AI/Claude tự động) ===
+    # Light WAF (chống AI dùng payload chuẩn)
     blocked_keywords = [
         'information_schema', 'sleep(', 'benchmark', 'union select', 
         'db_name', 'user()', 'version()', 'schema()', 'extractvalue', 
-        'updatexml', 'load_file'
+        'updatexml', 'load_file', 'pg_sleep'
     ]
     
-    lowered = q.lower()
-    if any(word in lowered for word in blocked_keywords):
-        time.sleep(1.8)                     # Phạt delay khi AI dùng payload chuẩn
+    if any(word in q.lower() for word in blocked_keywords):
+        time.sleep(1.8)
         return jsonify({"results": [], "note": "Invalid keyword detected"})
 
-    # === VULNERABLE RAW SQL - BLIND SQLi ===
+    # === VULNERABLE CODE ===
     sql = f"""
         SELECT v.vehicle_number, u.user_name, s.slot_location
         FROM vehicles v 
@@ -93,13 +94,13 @@ def advanced_search():
     """
 
     try:
-        results = db.session.execute(text(sql)).fetchall()
+        results = db.session.execute(text(sql)).fetchall()   # ← Dùng text() ở đây
         
         data = [{
             "vehicle_number": r[0],
             "owner": r[1],
             "slot": r[2],
-            "noise": "debug_" + str(time.time())[-5:],   # Noise JSON chống OCR/AI
+            "noise": "debug_" + str(time.time())[-5:],
             "ts": int(time.time() * 1000) % 100000
         } for r in results]
 
@@ -110,5 +111,5 @@ def advanced_search():
         })
     
     except Exception:
-        # Silent fail → Blind SQLi
-        return jsonify({"results": [], "count": 0, "note": "No results"})
+        # Silent error → Blind SQLi
+        return jsonify({"results": [], "count": 0, "note": "No results found"})
