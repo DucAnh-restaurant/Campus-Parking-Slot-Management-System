@@ -28,14 +28,14 @@ def admin_required(f):
 
 
 def staff_required(f):
-    """Allow only parking-staff (and admin as a super-role)."""
     @wraps(f)
-    def decorated(*args, **kwargs):
-        if 'user_id' not in session:
-            flash('Please log in to access this page.', 'warning')
-            return redirect(url_for('auth.login'))
-        if session.get('role') not in ('parking_staff', 'admin'):
-            flash('Access denied. Staff privileges required.', 'danger')
-            return redirect(url_for('auth.login'))
+    def decorated_function(*args, **kwargs):
+        role = session.get('role')
+        
+        # Sửa ở đây: Cho phép cả 2 role
+        if role not in ['parking_staff', 'staff']:
+            flash('Bạn không có quyền truy cập khu vực Staff!', 'danger')
+            return redirect(url_for('user.login'))   # hoặc url_for('user.dashboard')
+        
         return f(*args, **kwargs)
-    return decorated
+    return decorated_function
