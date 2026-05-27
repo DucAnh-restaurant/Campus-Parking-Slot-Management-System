@@ -22,13 +22,12 @@
             <div class="nav-links">
                 {% if session.get('role') == 'admin' %}
                     <a href="{{ url_for('admin.dashboard') }}" class="nav-link">Dashboard</a>
-                {% elif session.get('role') in ['parking_staff', 'staff'] %}
+                {% elif session.get('role') == 'parking_staff' %}
                     <a href="{{ url_for('staff.dashboard') }}" class="nav-link">Dashboard</a>
                 {% else %}
                     <a href="{{ url_for('user.dashboard') }}" class="nav-link">Dashboard</a>
                 {% endif %}
                 <div class="nav-user">
-                    <a href="{{ url_for('user.profile') }}" class="nav-link">Profile</a>
                     <span class="nav-user-name">{{ session.get('user_name', '') }}</span>
                     <span class="nav-role-badge role-{{ session.get('role', '') }}">{{ session.get('role', '') | replace('_', ' ') | title }}</span>
                     <a href="{{ url_for('auth.logout') }}" class="nav-link logout-link">Logout</a>

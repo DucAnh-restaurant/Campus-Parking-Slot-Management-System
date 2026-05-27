@@ -1,4 +1,4 @@
-from flask import Blueprint, request, session, redirect, url_for, flash, render_template, jsonify, current_app
+from flask import Blueprint, request, session, redirect, url_for, flash, render_template, jsonify
 from models import db
 from models.user import User
 from models.vehicle import Vehicle
@@ -6,8 +6,6 @@ from models.parking_slot import ParkingSlot
 from models.reservation import Reservation
 from utils.decorators import login_required
 from datetime import datetime, date
-import os
-from werkzeug.utils import secure_filename
 
 user_bp = Blueprint('user', __name__, url_prefix='/user')
 
@@ -223,44 +221,3 @@ def delete_vehicle(vehicle_id):
         print(f"Delete vehicle error: {e}")  # debug
 
     return redirect(url_for('user.dashboard'))
-
-
-# Cấu hình upload
-UPLOAD_FOLDER = 'static/uploads/profile'
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
-
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-@user_bp.route('/profile', methods=['GET', 'POST'])
-@login_required
-def profile():
-    user_id = session['user_id']
-    user = User.query.get_or_404(user_id)
-
-    if request.method == 'POST':
-        # Upload ảnh
-        if 'profile_image' in request.files:
-            file = request.files['profile_image']
-            if file and file.filename and allowed_file(file.filename):
-                # Tạo thư mục nếu chưa có
-                os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-                
-                filename = secure_filename(f"user_{user_id}_{file.filename}")
-                filepath = os.path.join(UPLOAD_FOLDER, filename)
-                file.save(filepath)
-                
-                # Xóa ảnh cũ nếu có
-                if user.profile_image:
-                    old_path = os.path.join('static', user.profile_image)
-                    if os.path.exists(old_path):
-                        os.remove(old_path)
-                
-                user.profile_image = f'uploads/profile/{filename}'
-                db.session.commit()
-                flash('Cập nhật ảnh đại diện thành công!', 'success')
-                return redirect(url_for('user.profile'))
-
-        flash('Không có file ảnh nào được chọn.', 'danger')
-
-    return render_template('dashboard/profile.html', user=user)

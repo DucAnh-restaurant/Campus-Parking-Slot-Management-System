@@ -28,7 +28,7 @@ def index():
         if role == 'admin':
             return redirect(url_for('admin.dashboard'))
 
-        elif role in ['parking_staff', 'staff']:
+        elif role == 'parking_staff':
             return redirect(url_for('staff.dashboard'))
 
         else:
