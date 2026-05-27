@@ -51,18 +51,16 @@ Wants=redis-server.service
 
 [Service]
 Type=simple
-User=parkingweb
-Group=parkingweb
-WorkingDirectory=/home/newuser/Campus-Parking-Slot-Management-System
-
-# Cách tốt nhất: Chạy qua virtualenv
-ExecStart=/home/newuser/Campus-Parking-Slot-Management-System/venv/bin/python app.py
-
+User=$USERNAME
+WorkingDirectory=$PROJECT_PATH
+ExecStart=/bin/bash $PROJECT_PATH/start.sh
 Restart=always
 RestartSec=5
 
-# Tùy chọn (nên có)
-Environment=PATH=/home/newuser/Campus-Parking-Slot-Management-System/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+StandardInput=tty
+StandardOutput=tty
+StandardError=tty
+TTYPath=/dev/tty1
 
 [Install]
 WantedBy=multi-user.target
