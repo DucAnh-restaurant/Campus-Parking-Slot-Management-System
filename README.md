@@ -1,3 +1,5 @@
+migrate lại db -> python init_db.py
+
 bước 1. cd Campus-Parking-Slot-Management-System && chmod +x setup.sh
 
 bước 2. sudo ./setup.sh
