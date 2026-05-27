@@ -28,6 +28,7 @@
                     <a href="{{ url_for('user.dashboard') }}" class="nav-link">Dashboard</a>
                 {% endif %}
                 <div class="nav-user">
+                    <a href="{{ url_for('user.profile') }}" class="nav-link">Profile</a>
                     <span class="nav-user-name">{{ session.get('user_name', '') }}</span>
                     <span class="nav-role-badge role-{{ session.get('role', '') }}">{{ session.get('role', '') | replace('_', ' ') | title }}</span>
                     <a href="{{ url_for('auth.logout') }}" class="nav-link logout-link">Logout</a>
