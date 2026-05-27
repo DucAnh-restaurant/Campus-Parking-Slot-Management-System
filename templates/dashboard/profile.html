@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}Profile{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="dashboard-header">
+        <h1>Thông tin cá nhân</h1>
+    </div>
+
+    <div class="profile-container">
+        <div class="profile-avatar">
+            {% if user.profile_image %}
+                <img src="{{ url_for('static', filename=user.profile_image) }}" 
+                     alt="Avatar" class="avatar-large">
+            {% else %}
+                <div class="avatar-placeholder">
+                    {{ user.user_name[0].upper() }}
+                </div>
+            {% endif %}
+        </div>
+
+        <form method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+                <label>Ảnh đại diện</label>
+                <input type="file" name="profile_image" accept="image/*">
+                <small>PNG, JPG, JPEG, GIF (tối đa 5MB)</small>
+            </div>
+            <button type="submit" class="btn btn-primary">Cập nhật ảnh</button>
+        </form>
+
+        <div class="profile-info">
+            <p><strong>Họ tên:</strong> {{ user.user_name }}</p>
+            <p><strong>Email:</strong> {{ user.email }}</p>
+            <p><strong>Role:</strong> {{ user.role | title }}</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

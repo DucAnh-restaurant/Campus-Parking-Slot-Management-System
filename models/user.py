@@ -17,6 +17,9 @@ class User(db.Model):
     login_attempts = db.Column(db.Integer, nullable=False, default=0)
     is_locked = db.Column(db.Boolean, nullable=False, default=False)
 
+    profile_image = db.Column(db.String(255), nullable=True)  # đường dẫn file ảnh
+
+
     # Relationships
     vehicles = db.relationship('Vehicle', backref='owner', lazy=True, cascade='all, delete-orphan')
     reservations = db.relationship('Reservation', backref='user', lazy=True)
