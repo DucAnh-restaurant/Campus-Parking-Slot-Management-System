@@ -1,0 +1,73 @@
+{% extends "base.html" %}  <!-- hoặc layout bạn đang dùng -->
+
+{% block title %}Profile - {{ user.user_name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Profile: {{ user.user_name }} 
+        <span class="badge bg-{{ 'success' if not user.is_locked else 'danger' }}">
+            {{ user.role }}
+        </span>
+    </h2>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Thông tin cá nhân</div>
+                <div class="card-body">
+                    <p><strong>User ID:</strong> {{ user.user_id }}</p>
+                    <p><strong>Email:</strong> {{ user.email }}</p>
+                    <p><strong>SĐT:</strong> {{ user.phone_number or 'Chưa có' }}</p>
+                    <p><strong>Trạng thái:</strong> 
+                        {% if user.is_locked %}
+                            <span class="text-danger">Bị khóa</span>
+                        {% else %}
+                            <span class="text-success">Hoạt động</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Xe của người dùng</div>
+                <div class="card-body">
+                    {% if vehicles %}
+                        <ul>
+                        {% for v in vehicles %}
+                            <li>{{ v.vehicle_number }} - {{ v.vehicle_type }}</li>
+                        {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>Chưa đăng ký xe.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h4 class="mt-4">Lịch sử đặt chỗ</h4>
+    <!-- Bảng reservations tương tự như trong dashboard -->
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Slot</th>
+                <th>Ngày</th>
+                <th>Trạng thái</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for res in reservations %}
+            <tr>
+                <td>{{ res.parking_slot.slot_location if res.parking_slot else 'N/A' }}</td>
+                <td>{{ res.reservation_date }}</td>
+                <td>{{ 'Active' if res.is_active else 'Expired' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary">Quay lại Dashboard</a>
+</div>
+{% endblock %}

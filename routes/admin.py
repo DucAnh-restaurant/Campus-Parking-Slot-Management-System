@@ -238,3 +238,25 @@ def export_csv():
         mimetype='text/csv',
         headers={'Content-Disposition': f'attachment;filename=reservations_{date.today().isoformat()}.csv'}
     )
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  USER PROFILE VIEW (Admin)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@admin_bp.route('/user/profile/<int:user_id>')
+@admin_required
+def user_profile(user_id):
+    """Xem profile chi tiết của bất kỳ user nào (dành cho Admin)."""
+    user = User.query.get_or_404(user_id)
+    
+    # Lấy dữ liệu liên quan
+    vehicles = Vehicle.query.filter_by(user_id=user_id).all()
+    reservations = Reservation.query.filter_by(user_id=user_id)\
+                    .order_by(Reservation.created_at.desc()).all()
+    active_reservation = Reservation.query.filter_by(user_id=user_id, is_active=True).first()
+    
+    return render_template('admin/user_profile.html',
+                           user=user,
+                           vehicles=vehicles,
+                           reservations=reservations,
+                           active_reservation=active_reservation)

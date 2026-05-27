@@ -144,10 +144,10 @@
         </div>
     </div>
 
-    <!-- ═══ TAB: MANAGE USERS ════════════════════════════════════ -->
+    <!-- ═══ TAB: MANAGE USERS (ĐÃ THÊM VIEW PROFILE) ════════════════════════════════════ -->
     <div class="tab-panel" id="panel-manage-users">
         <div class="panel-header">
-            <h2>Users</h2>
+            <h2>Users Management</h2>
             <button class="btn btn-primary btn-sm" onclick="openModal('addUserModal')" id="addUserBtn">+ Create User</button>
         </div>
         <div class="table-wrap">
@@ -159,7 +159,7 @@
                         <th>Email</th>
                         <th>Phone</th>
                         <th>Role</th>
-                        <th>Locked</th>
+                        <th>Status</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -179,6 +179,12 @@
                             {% endif %}
                         </td>
                         <td class="action-btns">
+                            <!-- Nút xem Profile -->
+                            <a href="{{ url_for('admin.user_profile', user_id=u.user_id) }}" 
+                               class="btn btn-info btn-xs">
+                                👤 View Profile
+                            </a>
+                            
                             {% if u.is_locked %}
                             <form method="POST" action="{{ url_for('admin.activate_user', user_id=u.user_id) }}" style="display:inline;">
                                 <button class="btn btn-success btn-xs">Unlock</button>
@@ -188,7 +194,13 @@
                                 <button class="btn btn-danger btn-xs" onclick="return confirm('Lock this user?')">Lock</button>
                             </form>
                             {% endif %}
-                            <button class="btn btn-secondary btn-xs" onclick="openResetPassword(this.dataset.id, this.dataset.username)" data-id="{{ u.user_id }}" data-username="{{ u.user_name }}">Reset PW</button>
+                            
+                            <button class="btn btn-secondary btn-xs" 
+                                    onclick="openResetPassword(this.dataset.id, this.dataset.username)" 
+                                    data-id="{{ u.user_id }}" 
+                                    data-username="{{ u.user_name }}">
+                                Reset PW
+                            </button>
                         </td>
                     </tr>
                     {% endfor %}
@@ -331,8 +343,7 @@ function loadReports() {
                     <div class="report-stat"><span class="report-stat-val">${data.utilization_percent}%</span><span class="report-stat-lbl">Utilization</span></div>
                 </div>`;
 
-            // Simple bar chart for peak hours
-            if (data.peak_hours.length > 0) {
+            if (data.peak_hours && data.peak_hours.length > 0) {
                 const maxCount = Math.max(...data.peak_hours.map(h => h.count));
                 let barsHtml = '<div class="bar-chart">';
                 for (let h = 0; h < 24; h++) {
