@@ -8,27 +8,14 @@
         <p class="dash-subtitle">Monitor active reservations (read-only)</p>
     </div>
 
-    <!-- ─── Normal Search (An toàn) ───────────────────────────────────────── -->
+    <!-- ─── Vehicle Search ───────────────────────────────────────── -->
     <div class="search-card">
-        <h3>🔍 Search by Vehicle Number (Normal)</h3>
+        <h3>🔍 Search by Vehicle Number</h3>
         <div class="search-bar">
             <input type="text" id="vehicleSearch" placeholder="Enter vehicle number..." class="input-lg" autocomplete="off">
             <button class="btn btn-primary" onclick="searchVehicle()" id="searchBtn">Search</button>
         </div>
         <div id="searchResults" class="search-results"></div>
-    </div>
-
-    <!-- ─── Advanced Search (VULNERABLE - CTF) ───────────────────────────── -->
-    <div class="search-card" style="border: 2px solid #ff9800; background: #fffaf0;">
-        <h3>🔍 Advanced Vehicle Search <span style="color:#ff9800;">(For Authorized Staff Only)</span></h3>
-        <div class="search-bar">
-            <input type="text" id="advancedSearch" placeholder="Advanced search (vehicle or owner)..." class="input-lg" autocomplete="off">
-            <button class="btn btn-warning" onclick="advancedSearch()" id="advSearchBtn">Advanced Search</button>
-        </div>
-        <small style="color:#d9534f;">
-            ⚠️ This search is strictly monitored. Do not attempt unauthorized queries.
-        </small>
-        <div id="advancedResults" class="search-results"></div>
     </div>
 
     <!-- ─── Active Reservations ──────────────────────────────────── -->
@@ -72,14 +59,10 @@
         {% endif %}
     </div>
 </div>
-
-<!-- Anti-Screenshot / Anti-AI Canvas Overlay -->
-<canvas id="antiOCR" style="position:fixed; bottom:15px; right:15px; opacity:0.12; pointer-events:none; z-index:9999; border:1px solid #ddd;"></canvas>
 {% endblock %}
 
 {% block scripts %}
 <script>
-// Normal Search (An toàn)
 document.getElementById('vehicleSearch').addEventListener('keydown', function(e) {
     if (e.key === 'Enter') searchVehicle();
 });
@@ -92,91 +75,20 @@ function searchVehicle() {
     fetch(`/staff/api/search?q=${encodeURIComponent(q)}`)
         .then(r => r.json())
         .then(data => {
-            renderResults(container, data);
+            if (data.length === 0) {
+                container.innerHTML = '<p class="text-muted">No matching reservations found.</p>';
+                return;
+            }
+            let html = '<table class="data-table"><thead><tr><th>ID</th><th>User</th><th>Email</th><th>Vehicle</th><th>Type</th><th>Slot</th><th>Date</th><th>Time</th></tr></thead><tbody>';
+            data.forEach(r => {
+                html += `<tr><td>${r.reservation_id}</td><td>${r.user_name}</td><td>${r.email}</td><td>${r.vehicle_number}</td><td>${r.vehicle_type}</td><td>${r.slot_location}</td><td>${r.reservation_date}</td><td>${r.reservation_time}</td></tr>`;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
         })
         .catch(() => {
             container.innerHTML = '<p class="text-muted">Search failed.</p>';
         });
 }
-
-// Advanced Search - Vulnerable Blind SQLi
-document.getElementById('advancedSearch').addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') advancedSearch();
-});
-
-function advancedSearch() {
-    const q = document.getElementById('advancedSearch').value.trim();
-    const container = document.getElementById('advancedResults');
-    if (!q) { container.innerHTML = ''; return; }
-
-    container.innerHTML = '<p class="text-muted">Searching...</p>';
-
-    fetch(`/staff/api/advanced-search?q=${encodeURIComponent(q)}`)
-        .then(r => r.json())
-        .then(data => {
-            if (data.results && data.results.length > 0) {
-                let html = `<p><strong>Found ${data.count} result(s)</strong></p>`;
-                html += '<table class="data-table"><thead><tr><th>Vehicle</th><th>Owner</th><th>Slot</th><th>Note</th></tr></thead><tbody>';
-                
-                data.results.forEach(r => {
-                    html += `<tr>
-                        <td>${r.vehicle_number || ''}</td>
-                        <td>${r.owner || ''}</td>
-                        <td>${r.slot || ''}</td>
-                        <td>${r.noise || ''}</td>
-                    </tr>`;
-                });
-                html += '</tbody></table>';
-                container.innerHTML = html;
-            } else {
-                container.innerHTML = `<p class="text-muted">${data.note || 'No matching records found.'}</p>`;
-            }
-        })
-        .catch(() => {
-            container.innerHTML = '<p class="text-muted">Search error occurred.</p>';
-        });
-}
-
-function renderResults(container, data) {
-    if (data.length === 0) {
-        container.innerHTML = '<p class="text-muted">No matching reservations found.</p>';
-        return;
-    }
-    let html = '<table class="data-table"><thead><tr><th>ID</th><th>User</th><th>Email</th><th>Vehicle</th><th>Type</th><th>Slot</th><th>Date</th><th>Time</th></tr></thead><tbody>';
-    data.forEach(r => {
-        html += `<tr>
-            <td>${r.reservation_id}</td>
-            <td>${r.user_name}</td>
-            <td>${r.email}</td>
-            <td>${r.vehicle_number}</td>
-            <td>${r.vehicle_type}</td>
-            <td>${r.slot_location}</td>
-            <td>${r.reservation_date}</td>
-            <td>${r.reservation_time}</td>
-        </tr>`;
-    });
-    html += '</tbody></table>';
-    container.innerHTML = html;
-}
-
-// Anti-Screenshot Canvas
-function drawAntiOCR() {
-    const canvas = document.getElementById('antiOCR');
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    canvas.width = 380;
-    canvas.height = 90;
-    
-    ctx.font = 'bold 22px Arial';
-    ctx.fillStyle = '#d9534f33';
-    ctx.fillText('CONFIDENTIAL - STAFF ONLY', 20, 35);
-    
-    ctx.font = '18px Arial';
-    ctx.fillStyle = '#ff980033';
-    ctx.fillText('DO NOT SCREENSHOT OR SHARE', 25, 65);
-}
-
-setInterval(drawAntiOCR, 2500);
-window.onload = drawAntiOCR;
 </script>
 {% endblock %}
