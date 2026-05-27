@@ -1,5 +1,8 @@
 #!/bin/bash
 
+echo "[*] Initializing database..."
+python init_db.py
+
 echo "[*] ==============================================="
 echo "[*] Campus Parking Slot Management System"
 echo "[*] ==============================================="
