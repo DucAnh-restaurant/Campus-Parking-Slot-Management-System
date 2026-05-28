@@ -57,10 +57,15 @@ ExecStart=/bin/bash $PROJECT_PATH/start.sh
 Restart=always
 RestartSec=5
 
-StandardInput=tty
-StandardOutput=tty
-StandardError=tty
-TTYPath=/dev/tty1
+# StandardInput=tty
+# StandardOutput=tty
+# StandardError=tty
+# TTYPath=/dev/tty1
+
+# Thay thế các dòng StandardInput/Output bằng các dòng dưới đây
+StandardOutput=journal
+StandardError=journal
+
 
 [Install]
 WantedBy=multi-user.target
@@ -69,6 +74,9 @@ EOF
 # Reload systemd, enable and start the service
 sudo systemctl daemon-reload
 sudo systemctl enable parking.service
+
+# Restart dịch vụ để áp dụng ngay các thay đổi
+sudo systemctl restart parking.service
 
 # Tạo file đánh dấu đã setup xong
 sudo mkdir -p /opt/parking
